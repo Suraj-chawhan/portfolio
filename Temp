@@ -1,0 +1,227 @@
+import React, { useRef, useState } from 'react';
+ import { Canvas } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
+ import Model from './Model.jsx'
+
+
+export default function App(){
+  
+  return(
+    <div style={{width:"100vh",heigh:"100vh",backgroundColor:"#0000aa"}}>
+      <ambientLight intensity={10}/>
+      <Canvas style={{width:"100%",height:"100%"}}>
+        <OrbitControls/>
+        <Model/>
+      </Canvas>
+    </div>
+    
+    )
+}
+
+
+
+
+import React, { useEffect, useRef } from 'react';
+import { useGLTF } from '@react-three/drei';
+
+export default function Model({ viseme }) {
+  const group = useRef();
+  const { nodes, materials } = useGLTF('/idle2.glb');
+
+  useEffect(() => {
+    if (!viseme) return;
+
+    const visemeMeshes = [
+      nodes?.Wolf3D_Head,
+      nodes?.Wolf3D_Teeth,
+      nodes?.EyeLeft,
+      nodes?.EyeRight,
+    ];
+
+    visemeMeshes.forEach((mesh) => {
+      if (!mesh?.morphTargetDictionary || !mesh?.morphTargetInfluences) return;
+
+      const dict = mesh.morphTargetDictionary;
+      const influences = mesh.morphTargetInfluences;
+
+      for (let i = 0; i < influences.length; i++) {
+        influences[i] = 0;
+      }
+
+      const visemeKey = `${viseme}`;
+      const index = dict[visemeKey];
+      if (index !== undefined) {
+        influences[index] = 1;
+        console.log(`Applied viseme: ${visemeKey}`);
+      } else {
+        console.warn(`Viseme not found: ${visemeKey}`);
+      }
+    });
+  }, [viseme, nodes]);
+
+
+useEffect(() => {
+  const head = nodes?.Wolf3D_Head;
+  if (!head?.morphTargetDictionary) return;
+
+  const visemes = Object.keys(head.morphTargetDictionary).filter(key =>
+    key.startsWith('viseme_')
+  );
+
+}, [nodes]);
+
+
+
+  return (
+    <group ref={group} dispose={null} position={[0,0,0]}  scale={1}>
+      <group name="Scene">
+        <group
+          name="Armature"
+          position={[1.224, 0, 0]}
+          rotation={[Math.PI / 2, 0, 0]}
+          scale={0.01}
+        >
+          <primitive object={nodes.mixamorigHips} />
+        </group>
+
+        <mesh
+          name="EyeLeft"
+          castShadow
+          receiveShadow
+          geometry={nodes.EyeLeft.geometry}
+          material={materials.Wolf3D_Eye}
+          morphTargetDictionary={nodes.EyeLeft.morphTargetDictionary}
+          morphTargetInfluences={nodes.EyeLeft.morphTargetInfluences}
+        />
+        <mesh
+          name="EyeRight"
+          castShadow
+          receiveShadow
+          geometry={nodes.EyeRight.geometry}
+          material={materials.Wolf3D_Eye}
+          morphTargetDictionary={nodes.EyeRight.morphTargetDictionary}
+          morphTargetInfluences={nodes.EyeRight.morphTargetInfluences}
+        />
+        <mesh
+          name="Wolf3D_Head"
+          castShadow
+          receiveShadow
+          geometry={nodes.Wolf3D_Head.geometry}
+          material={materials.Wolf3D_Skin}
+          morphTargetDictionary={nodes.Wolf3D_Head.morphTargetDictionary}
+          morphTargetInfluences={nodes.Wolf3D_Head.morphTargetInfluences}
+        />
+        <mesh
+          name="Wolf3D_Teeth"
+          castShadow
+          receiveShadow
+          geometry={nodes.Wolf3D_Teeth.geometry}
+          material={materials.Wolf3D_Teeth}
+          morphTargetDictionary={nodes.Wolf3D_Teeth.morphTargetDictionary}
+          morphTargetInfluences={nodes.Wolf3D_Teeth.morphTargetInfluences}
+        />
+        <mesh
+          name="Wolf3D_Hair"
+          castShadow
+          receiveShadow
+          geometry={nodes.Wolf3D_Hair.geometry}
+          material={materials.Wolf3D_Hair}
+        />
+        <mesh
+          name="Wolf3D_Body"
+          castShadow
+          receiveShadow
+          geometry={nodes.Wolf3D_Body.geometry}
+          material={materials.Wolf3D_Body}
+        />
+        <mesh
+          name="Wolf3D_Outfit_Footwear"
+          castShadow
+          receiveShadow
+          geometry={nodes.Wolf3D_Outfit_Footwear.geometry}
+          material={materials.Wolf3D_Outfit_Footwear}
+        />
+        <mesh
+          name="Wolf3D_Outfit_Top"
+          castShadow
+          receiveShadow
+          geometry={nodes.Wolf3D_Outfit_Top.geometry}
+          material={materials.Wolf3D_Outfit_Top}
+        />
+      </group>
+    </group>
+  );
+}
+
+useGLTF.preload('/idle2.glb');
+
+
+
+
+
+
+// import React, { useRef, useState } from 'react';
+// import { Canvas } from '@react-three/fiber';
+// import { OrbitControls } from '@react-three/drei';
+// import Model from './Model';
+// import { Lipsync } from 'wawa-lipsync';
+
+// const lipsyncManager = new Lipsync();
+
+// export default function CharacterCanvas() {,
+//   const [viseme, setViseme] = useState('');
+//   const [showModel, setShowModel] = useState(false);
+//   const audioRef = useRef(null);
+//   const rafId = useRef(null);
+//   const [text, setText] = useState('');
+//   const [loading, setLoading] = useState(false);
+
+//   const analyzeAudio = () => {
+//     lipsyncManager.processAudio();
+//     setViseme(lipsyncManager.viseme);
+//     rafId.current = requestAnimationFrame(analyzeAudio);
+//   };
+
+//   const stop = () => {
+//     if (rafId.current) {
+//       cancelAnimationFrame(rafId.current);
+//       rafId.current = null;
+//     }
+//   };
+
+//   const speakText = async () => {
+  
+//     const audio = audioRef.current;
+//     audio.src = "/audio.wav";
+
+//     lipsyncManager.connectAudio(audio);
+//     setShowModel(true);
+//     audio.play();
+//     analyzeAudio();
+
+//     setLoading(false);
+//   };
+
+//   return (
+//     <div>
+//       <Canvas style={{ height: '50vh' }} camera={{ position: [0, 1.5, 3] }}>
+//         <ambientLight intensity={0.5} />
+//         <directionalLight position={[2, 3, 2]} />
+//         <OrbitControls />
+//         {showModel && <Model viseme={viseme} />}
+//       </Canvas>
+
+//       <input
+//         type="text"
+//         value={text}
+//         onChange={(e) => setText(e.target.value)}
+//         placeholder="Ask me anything..."
+//       />
+//       <button onClick={speakText} disabled={loading}>
+//         {loading ? 'Generating...' : '🔊 Speak from AI'}
+//       </button>
+
+//       <audio ref={audioRef} crossOrigin="anonymous" onEnded={stop} />
+//     </div>
+//   );
+// }
